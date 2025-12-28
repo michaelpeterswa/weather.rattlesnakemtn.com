@@ -10,6 +10,16 @@ A real-time weather dashboard for Rattlesnake Mountain, featuring interactive ch
 - **Dark/Light Mode** - Theme toggle with system preference support
 - **Responsive Design** - Optimized for desktop and mobile devices
 
+## Data Sources
+
+### Weather Station
+
+Current conditions are collected from a [WeatherFlow Tempest](https://tempest.earth/) station located on Rattlesnake Mountain. The station reports temperature, humidity, pressure, wind speed, and wind direction to InfluxDB.
+
+### NWS Forecast
+
+The 7-day forecast is sourced from the [National Weather Service API](https://www.weather.gov/documentation/services-web-api) using grid point SEW/139,58. Note that the NWS grid point is approximately 200 ft lower in elevation than the station, so forecast temperatures may differ slightly from observed conditions.
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 with React 19 and TypeScript
