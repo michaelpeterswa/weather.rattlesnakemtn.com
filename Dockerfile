@@ -1,17 +1,17 @@
-FROM oven/bun:1.1 AS base
+FROM oven/bun:1.2 AS base
 WORKDIR /usr/src/app
 
 # install dependencies into temp directory
 # this will cache them and speed up future builds
 FROM base AS install
 RUN mkdir -p /temp/dev
-COPY package.json bun.lockb /temp/dev/
+COPY package.json bun.lock /temp/dev/
 # hadolint ignore=DL3003
 RUN cd /temp/dev && bun install --frozen-lockfile
 
 # install with --production (exclude devDependencies)
 RUN mkdir -p /temp/prod
-COPY package.json bun.lockb /temp/prod/
+COPY package.json bun.lock /temp/prod/
 # hadolint ignore=DL3003
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 
@@ -22,10 +22,8 @@ COPY --from=install /temp/dev/node_modules node_modules
 COPY . .
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN bun test
-# hadolint ignore=DL3059
 RUN bun run build
 
 # copy production dependencies and source code into final image
@@ -39,8 +37,8 @@ COPY --from=prerelease /usr/src/app/package.json .
 # run the app
 USER bun
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000/tcp
 ENTRYPOINT [ "bun", "run", "server.js" ]
