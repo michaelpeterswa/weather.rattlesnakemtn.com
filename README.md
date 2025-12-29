@@ -7,6 +7,7 @@ A real-time weather dashboard for Rattlesnake Mountain, featuring interactive ch
 - **Current Conditions** - Temperature, humidity, pressure, wind speed, and wind direction with sparkline visualizations
 - **Interactive Charts** - Historical weather data across configurable time ranges (24h, 7d, 30d, 90d)
 - **7-Day Forecast** - NWS forecast with temperature, wind, and precipitation data
+- **SNOTEL Snow Depth** - Real-time snow depth data from nearby SNOTEL stations
 - **Dark/Light Mode** - Theme toggle with system preference support
 - **Responsive Design** - Optimized for desktop and mobile devices
 
@@ -20,13 +21,17 @@ Current conditions are collected from a [WeatherFlow Tempest](https://tempest.ea
 
 The 7-day forecast is sourced from the [National Weather Service API](https://www.weather.gov/documentation/services-web-api) using grid point SEW/139,58. Note that the NWS grid point is approximately 200 ft lower in elevation than the station, so forecast temperatures may differ slightly from observed conditions.
 
+### SNOTEL Snow Depth
+
+Snow depth data is sourced from the [USDA NRCS SNOTEL](https://www.nrcs.usda.gov/wps/portal/wcc/home/aboutUs/monitoringPrograms/automatedSnowMonitoring/) network via the [AWDB REST API](https://wcc.sc.egov.usda.gov/awdbRestApi/swagger-ui/index.html). The dashboard displays hourly snow depth readings from nearby SNOTEL stations, with each station showing its distance and direction from Rattlesnake Mountain along with elevation. Default stations include Mount Gardner, Tinkham Creek, and Skookum Creek.
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 with React 19 and TypeScript
 - **UI**: Tailwind CSS, Radix UI, shadcn/ui components
 - **Charts**: Recharts
 - **Database**: InfluxDB (time-series weather data)
-- **API**: National Weather Service API
+- **APIs**: National Weather Service, USDA SNOTEL
 - **Runtime**: Bun
 
 ## Getting Started
@@ -63,6 +68,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 | `INFLUXDB_ORG` | InfluxDB organization |
 | `INFLUXDB_BUCKET` | InfluxDB bucket name |
 | `INFLUXDB_STATION` | Weather station identifier |
+| `SNOTEL_STATION_TRIPLETS` | Comma-separated SNOTEL station IDs (e.g., `898:WA:SNTL,899:WA:SNTL`) |
 
 ## Project Structure
 

@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { NWSForecast } from "@/components/nws-forecast";
+import { SnotelSnowDepth } from "@/components/snotel-snow-depth";
 import WeatherStats from "@/components/weather-stats";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -25,6 +26,9 @@ export default function Page() {
               <WeatherStats />
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
+              </div>
+              <div className="px-4 lg:px-6">
+                <SnotelSnowDepth />
               </div>
               <div className="px-4 lg:px-6">
                 <NWSForecast />
