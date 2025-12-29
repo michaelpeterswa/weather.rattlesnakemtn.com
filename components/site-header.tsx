@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { MountainSnow } from "lucide-react";
 
 export function SiteHeader() {
   return (
@@ -12,9 +13,8 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">
-          Rattlesnake Mountain - Dashboard
-        </h1>
+        <MountainSnow className="size-5!" />
+        <h1 className="text-base font-medium">Rattlesnake Mountain</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
             <a
