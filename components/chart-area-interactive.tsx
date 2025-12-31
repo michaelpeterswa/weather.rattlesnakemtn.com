@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useTheme } from "next-themes";
 import {
   getChartData,
   MetricType,
@@ -67,6 +68,8 @@ function getChartConfig(metric: MetricType): ChartConfig {
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [timeRange, setTimeRange] = React.useState("7d");
   const [metric, setMetric] = React.useState<MetricType>("temperature");
   const [chartStats, setChartStats] = React.useState<ChartDataStats | null>(
@@ -203,21 +206,29 @@ export function ChartAreaInteractive() {
             <AreaChart data={chartStats.data}>
               <defs>
                 <linearGradient id="fillHigh" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={metricColor} stopOpacity={0.8} />
+                  <stop offset="5%" stopColor={metricColor} stopOpacity={0.3} />
                   <stop
                     offset="95%"
                     stopColor={metricColor}
-                    stopOpacity={0.1}
+                    stopOpacity={0.02}
                   />
                 </linearGradient>
                 <linearGradient id="fillLow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={metricColor} stopOpacity={0.4} />
+                  <stop offset="5%" stopColor={metricColor} stopOpacity={0.15} />
                   <stop
                     offset="95%"
                     stopColor={metricColor}
-                    stopOpacity={0.05}
+                    stopOpacity={0.01}
                   />
                 </linearGradient>
+                {/* Glow filter for chart lines */}
+                <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
               <CartesianGrid vertical={false} />
               <YAxis
@@ -246,17 +257,20 @@ export function ChartAreaInteractive() {
                     return date.toLocaleTimeString("en-US", {
                       hour: "numeric",
                       hour12: true,
+                      timeZone: "America/Los_Angeles",
                     });
                   }
                   if (timeRange === "7d" || timeRange === "30d") {
                     return date.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      timeZone: "America/Los_Angeles",
                     });
                   }
                   return date.toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
+                    timeZone: "America/Los_Angeles",
                   });
                 }}
               />
@@ -271,6 +285,7 @@ export function ChartAreaInteractive() {
                           hour: "numeric",
                           minute: "2-digit",
                           hour12: true,
+                          timeZone: "America/Los_Angeles",
                         });
                       }
                       if (timeRange === "7d" || timeRange === "30d") {
@@ -279,11 +294,13 @@ export function ChartAreaInteractive() {
                           day: "numeric",
                           hour: "numeric",
                           hour12: true,
+                          timeZone: "America/Los_Angeles",
                         });
                       }
                       return date.toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
+                        timeZone: "America/Los_Angeles",
                       });
                     }}
                     formatter={(value, name) => (
@@ -302,12 +319,14 @@ export function ChartAreaInteractive() {
                 fill="url(#fillLow)"
                 stroke={metricColor}
                 strokeOpacity={0.6}
+                filter={isDark ? "url(#lineGlow)" : undefined}
               />
               <Area
                 dataKey="high"
                 type="natural"
                 fill="url(#fillHigh)"
                 stroke={metricColor}
+                filter={isDark ? "url(#lineGlow)" : undefined}
               />
             </AreaChart>
           </ChartContainer>

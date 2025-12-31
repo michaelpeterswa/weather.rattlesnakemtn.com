@@ -8,7 +8,8 @@ export interface PressureDataPoint {
 }
 
 export interface PressureStats {
-  current: number;
+  current: number | null;
+  lastUpdated: string | null;
   high: number;
   low: number;
   trend: "rising" | "falling" | "steady";
@@ -34,7 +35,20 @@ export async function getPressureData(): Promise<PressureStats> {
       |> yield(name: "mean")
   `;
 
+  // Query for the most recent pressure reading (within 1 hour)
+  const lastQuery = `
+    from(bucket: "${bucket}")
+      |> range(start: -1h)
+      |> filter(fn: (r) => r["_measurement"] == "weather")
+      |> filter(fn: (r) => r["station"] == "${station}")
+      |> filter(fn: (r) => r["_field"] == "p")
+      |> last()
+      |> yield(name: "last")
+  `;
+
   const data: PressureDataPoint[] = [];
+  let currentPressure: number | null = null;
+  let lastUpdated: string | null = null;
 
   try {
     const rows = queryApi.iterateRows(fluxQuery);
@@ -51,6 +65,14 @@ export async function getPressureData(): Promise<PressureStats> {
         pressure: hPaToInHg(row._value as number),
       });
     }
+
+    // Get the most recent reading
+    const lastRows = queryApi.iterateRows(lastQuery);
+    for await (const { values, tableMeta } of lastRows) {
+      const row = tableMeta.toObject(values);
+      currentPressure = hPaToInHg(row._value as number);
+      lastUpdated = row._time as string;
+    }
   } catch (error) {
     console.error("Error querying InfluxDB:", error);
     throw new Error("Failed to fetch pressure data");
@@ -58,7 +80,8 @@ export async function getPressureData(): Promise<PressureStats> {
 
   if (data.length === 0) {
     return {
-      current: 0,
+      current: null,
+      lastUpdated: null,
       high: 0,
       low: 0,
       trend: "steady",
@@ -67,7 +90,6 @@ export async function getPressureData(): Promise<PressureStats> {
   }
 
   const pressures = data.map((d) => d.pressure);
-  const current = pressures[pressures.length - 1];
   const high = Math.max(...pressures);
   const low = Math.min(...pressures);
 
@@ -84,7 +106,8 @@ export async function getPressureData(): Promise<PressureStats> {
   }
 
   return {
-    current,
+    current: currentPressure,
+    lastUpdated,
     high,
     low,
     trend,

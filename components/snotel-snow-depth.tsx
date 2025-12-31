@@ -20,6 +20,7 @@ import {
   SnotelResponse,
   SnotelStationData,
 } from "@/app/actions/snotel";
+import { useTheme } from "next-themes";
 
 // Colors for each station
 const STATION_COLORS = [
@@ -65,6 +66,8 @@ function buildChartData(stations: SnotelStationData[]): ChartDataPoint[] {
 }
 
 export function SnotelSnowDepth() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [snotelData, setSnotelData] = React.useState<SnotelResponse | null>(
     null
   );
@@ -135,15 +138,23 @@ export function SnotelSnowDepth() {
                       <stop
                         offset="5%"
                         stopColor={STATION_COLORS[index % STATION_COLORS.length]}
-                        stopOpacity={0.8}
+                        stopOpacity={0.3}
                       />
                       <stop
                         offset="95%"
                         stopColor={STATION_COLORS[index % STATION_COLORS.length]}
-                        stopOpacity={0.1}
+                        stopOpacity={0.02}
                       />
                     </linearGradient>
                   ))}
+                  {/* Glow filter for chart lines */}
+                  <filter id="snotelLineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
                 </defs>
                 <CartesianGrid vertical={false} />
                 <YAxis
@@ -167,6 +178,7 @@ export function SnotelSnowDepth() {
                       day: "numeric",
                       hour: "numeric",
                       hour12: true,
+                      timeZone: "America/Los_Angeles",
                     });
                   }}
                 />
@@ -182,6 +194,7 @@ export function SnotelSnowDepth() {
                           hour: "numeric",
                           minute: "2-digit",
                           hour12: true,
+                          timeZone: "America/Los_Angeles",
                         });
                       }}
                       formatter={(value, name) => {
@@ -207,6 +220,7 @@ export function SnotelSnowDepth() {
                     fill={`url(#fill-${station.stationTriplet.replace(/:/g, "-")})`}
                     stroke={STATION_COLORS[index % STATION_COLORS.length]}
                     fillOpacity={0.3}
+                    filter={isDark ? "url(#snotelLineGlow)" : undefined}
                   />
                 ))}
               </AreaChart>

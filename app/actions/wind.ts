@@ -8,7 +8,8 @@ export interface WindDataPoint {
 }
 
 export interface WindStats {
-  current: number;
+  current: number | null;
+  lastUpdated: string | null;
   high: number;
   low: number;
   gust: number;
@@ -35,6 +36,17 @@ export async function getWindData(): Promise<WindStats> {
       |> yield(name: "mean")
   `;
 
+  // Query for the most recent wind reading (within 1 hour)
+  const lastQuery = `
+    from(bucket: "${bucket}")
+      |> range(start: -1h)
+      |> filter(fn: (r) => r["_measurement"] == "weather")
+      |> filter(fn: (r) => r["station"] == "${station}")
+      |> filter(fn: (r) => r["_field"] == "wind_avg")
+      |> last()
+      |> yield(name: "last")
+  `;
+
   // Query for max gust in the period
   const gustQuery = `
     from(bucket: "${bucket}")
@@ -48,6 +60,8 @@ export async function getWindData(): Promise<WindStats> {
 
   const data: WindDataPoint[] = [];
   let maxGust = 0;
+  let currentWind: number | null = null;
+  let lastUpdated: string | null = null;
 
   try {
     // Get average wind data
@@ -65,6 +79,14 @@ export async function getWindData(): Promise<WindStats> {
       });
     }
 
+    // Get the most recent reading
+    const lastRows = queryApi.iterateRows(lastQuery);
+    for await (const { values, tableMeta } of lastRows) {
+      const row = tableMeta.toObject(values);
+      currentWind = msToMph(row._value as number);
+      lastUpdated = row._time as string;
+    }
+
     // Get max gust
     const gustRows = queryApi.iterateRows(gustQuery);
     for await (const { values, tableMeta } of gustRows) {
@@ -78,7 +100,8 @@ export async function getWindData(): Promise<WindStats> {
 
   if (data.length === 0) {
     return {
-      current: 0,
+      current: null,
+      lastUpdated: null,
       high: 0,
       low: 0,
       gust: 0,
@@ -87,12 +110,12 @@ export async function getWindData(): Promise<WindStats> {
   }
 
   const speeds = data.map((d) => d.speed);
-  const current = speeds[speeds.length - 1];
   const high = Math.max(...speeds);
   const low = Math.min(...speeds);
 
   return {
-    current,
+    current: currentWind,
+    lastUpdated,
     high,
     low,
     gust: maxGust,
