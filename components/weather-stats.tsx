@@ -156,6 +156,7 @@ export default function WeatherStats() {
           unit="°F"
           color="hsl(24 95% 53%)"
           currentValue={temperature.data?.current ?? null}
+          lastUpdated={temperature.data?.lastUpdated}
           highValue={temperature.data?.high}
           lowValue={temperature.data?.low}
           data={temperatureData}
@@ -168,6 +169,7 @@ export default function WeatherStats() {
           unit="%"
           color="hsl(199 89% 48%)"
           currentValue={humidity.data?.current ?? null}
+          lastUpdated={humidity.data?.lastUpdated}
           highValue={humidity.data?.high}
           lowValue={humidity.data?.low}
           data={humidityData}
@@ -180,6 +182,7 @@ export default function WeatherStats() {
           unit=" inHg"
           color="hsl(142 76% 36%)"
           currentValue={pressure.data?.current ?? null}
+          lastUpdated={pressure.data?.lastUpdated}
           highValue={pressure.data?.high}
           lowValue={pressure.data?.low}
           description={pressure.data?.trend ? `${pressure.data.trend.charAt(0).toUpperCase()}${pressure.data.trend.slice(1)}` : undefined}
@@ -193,6 +196,7 @@ export default function WeatherStats() {
           unit=" mph"
           color="hsl(262 83% 58%)"
           currentValue={wind.data?.current ?? null}
+          lastUpdated={wind.data?.lastUpdated}
           highValue={wind.data?.high}
           lowValue={wind.data?.low}
           description={wind.data?.gust ? `Gust: ${wind.data.gust} mph` : undefined}
@@ -225,7 +229,7 @@ export default function WeatherStats() {
             ) : (
               <>
                 <dd
-                  className="text-3xl font-semibold flex-1 flex items-center"
+                  className="text-6xl font-bold flex-1 flex items-center"
                   style={{ color: "hsl(262 83% 58%)" }}
                 >
                   {windDirection.data?.cardinal ?? "--"}

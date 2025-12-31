@@ -2,7 +2,9 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { Area, AreaChart, XAxis } from "recharts";
+import { Area, AreaChart, XAxis, YAxis } from "recharts";
+import { formatDistanceToNow } from "date-fns";
+import { useTheme } from "next-themes";
 
 export interface WeatherDataPoint {
   time: string;
@@ -14,6 +16,7 @@ export interface WeatherStatCardProps {
   unit: string;
   color: string;
   currentValue: number | null;
+  lastUpdated?: string | null;
   highValue?: number;
   lowValue?: number;
   description?: string;
@@ -34,6 +37,7 @@ export function WeatherStatCard({
   unit,
   color,
   currentValue,
+  lastUpdated,
   highValue,
   lowValue,
   description,
@@ -41,6 +45,8 @@ export function WeatherStatCard({
   loading = false,
   error = null,
 }: WeatherStatCardProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const sanitizedName = sanitizeName(name);
   const gradientId = `gradient-${sanitizedName}`;
 
@@ -100,6 +106,11 @@ export function WeatherStatCard({
           <dd className="text-lg font-semibold" style={{ color }}>
             {currentValue !== null ? `${currentValue}${unit}` : "--"}
           </dd>
+          {lastUpdated && (
+            <dd className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
+            </dd>
+          )}
         </div>
 
         <div className="mt-2 h-16 overflow-hidden">
@@ -115,18 +126,28 @@ export function WeatherStatCard({
             <AreaChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                  <stop offset="5%" stopColor={color} stopOpacity={0.4} />
                   <stop offset="95%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
+                {/* Glow filter for chart lines */}
+                <filter id={`lineGlow-${sanitizedName}`} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
               <XAxis dataKey="time" hide={true} />
+              <YAxis domain={["auto", "auto"]} hide={true} />
               <Area
                 dataKey={name}
                 stroke={color}
                 fill={`url(#${gradientId})`}
-                fillOpacity={0.4}
+                fillOpacity={0.5}
                 strokeWidth={1.5}
                 type="monotone"
+                filter={isDark ? `url(#lineGlow-${sanitizedName})` : undefined}
               />
             </AreaChart>
           </ChartContainer>

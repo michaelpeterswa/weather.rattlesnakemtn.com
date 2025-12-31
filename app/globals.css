@@ -123,3 +123,128 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* VHS Overlay Effect - Dark mode only */
+:root.dark .vhs-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Scanlines */
+:root.dark .vhs-overlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.08) 0px,
+    rgba(0, 0, 0, 0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Subtle color wash */
+:root.dark .vhs-overlay::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.015) 0%,
+    rgba(0, 255, 0, 0.01) 50%,
+    rgba(0, 0, 255, 0.015) 100%
+  );
+  animation: vhs-color-shift 4s ease-in-out infinite;
+}
+
+@keyframes vhs-color-shift {
+  0%, 100% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+}
+
+/* Chromatic Aberration Effect - Dark mode only */
+:root.dark .vhs-chromatic * {
+  text-shadow:
+    -0.25px 0 rgba(255, 0, 0, 0.25),
+    0.25px 0 rgba(0, 255, 255, 0.25),
+    0 0 3px currentColor,
+    0 0 6px currentColor;
+  animation: chromatic-shift 10s ease-in-out infinite;
+}
+
+/* Disable text glow inside charts/SVGs for readability */
+:root.dark .vhs-chromatic svg text,
+:root.dark .vhs-chromatic svg tspan {
+  text-shadow: none;
+  animation: none;
+}
+
+/* Glow effect for hr dividers only */
+:root.dark .vhs-chromatic hr {
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.08);
+}
+
+/* Glow for images, SVGs, and icons (exclude chart SVGs) */
+:root.dark .vhs-chromatic img,
+:root.dark .vhs-chromatic svg:not([data-slot="chart"] svg),
+:root.dark .vhs-chromatic canvas {
+  filter:
+    drop-shadow(-0.2px 0 rgba(255, 0, 0, 0.15))
+    drop-shadow(0.2px 0 rgba(0, 255, 255, 0.15))
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.05));
+  animation: chromatic-shift-img 10s ease-in-out infinite;
+}
+
+/* Remove VHS filter from chart SVGs - glow is applied via SVG filters on lines */
+:root.dark .vhs-chromatic [data-slot="chart"] svg {
+  filter: none;
+  animation: none;
+}
+
+@keyframes chromatic-shift {
+  0%, 100% {
+    text-shadow:
+      -0.25px 0 rgba(255, 0, 0, 0.25),
+      0.25px 0 rgba(0, 255, 255, 0.25),
+      0 0 3px currentColor,
+      0 0 6px currentColor;
+  }
+  50% {
+    text-shadow:
+      -0.35px 0 rgba(255, 0, 0, 0.3),
+      0.35px 0 rgba(0, 255, 255, 0.3),
+      0 0 4px currentColor,
+      0 0 8px currentColor;
+  }
+}
+
+@keyframes chromatic-shift-img {
+  0%, 100% {
+    filter:
+      drop-shadow(-0.2px 0 rgba(255, 0, 0, 0.15))
+      drop-shadow(0.2px 0 rgba(0, 255, 255, 0.15))
+      drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))
+      drop-shadow(0 0 4px rgba(255, 255, 255, 0.05));
+  }
+  50% {
+    filter:
+      drop-shadow(-0.3px 0 rgba(255, 0, 0, 0.2))
+      drop-shadow(0.3px 0 rgba(0, 255, 255, 0.2))
+      drop-shadow(0 0 3px rgba(255, 255, 255, 0.12))
+      drop-shadow(0 0 6px rgba(255, 255, 255, 0.08));
+  }
+}
