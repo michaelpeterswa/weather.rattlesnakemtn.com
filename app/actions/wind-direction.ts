@@ -1,5 +1,6 @@
 "use server";
 
+import { cacheLife } from "next/cache";
 import { queryApi } from "@/lib/influxdb";
 
 export interface WindDirectionStats {
@@ -39,6 +40,9 @@ function degreesToCardinal(degrees: number): { short: string; full: string } {
 }
 
 export async function getWindDirectionData(): Promise<WindDirectionStats> {
+  "use cache";
+  cacheLife({ revalidate: 300 }); // 5 minutes
+
   const bucket = process.env.INFLUXDB_BUCKET || "weather";
   const station = process.env.INFLUXDB_STATION || "ST-00190461";
 

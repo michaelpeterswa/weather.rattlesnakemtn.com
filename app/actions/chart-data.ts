@@ -1,8 +1,17 @@
 "use server";
 
+import { cacheLife } from "next/cache";
 import { queryApi } from "@/lib/influxdb";
 
-export type MetricType = "temperature" | "humidity" | "pressure" | "wind";
+export type MetricType =
+  | "temperature"
+  | "humidity"
+  | "pressure"
+  | "wind"
+  | "dewPoint"
+  | "uv"
+  | "solarRadiation"
+  | "illuminance";
 
 export interface ChartDataPoint {
   date: string;
@@ -60,12 +69,39 @@ const METRIC_CONFIG: Record<MetricType, {
     label: "Wind Speed",
     convert: msToMph,
   },
+  dewPoint: {
+    field: "dew_point",
+    unit: "°F",
+    label: "Dew Point",
+    convert: celsiusToFahrenheit,
+  },
+  uv: {
+    field: "uv",
+    unit: "UVI",
+    label: "UV Index",
+    convert: (v) => Math.round(v * 10) / 10,
+  },
+  solarRadiation: {
+    field: "solar_radiation",
+    unit: "W/m²",
+    label: "Solar Radiation",
+    convert: (v) => Math.round(v),
+  },
+  illuminance: {
+    field: "illuminance",
+    unit: "lux",
+    label: "Illuminance",
+    convert: (v) => Math.round(v),
+  },
 };
 
 export async function getChartData(
   metric: MetricType,
   days: number = 7
 ): Promise<ChartDataStats> {
+  "use cache";
+  cacheLife({ revalidate: 300 }); // 5 minutes
+
   const bucket = process.env.INFLUXDB_BUCKET || "weather";
   const station = process.env.INFLUXDB_STATION || "ST-00190461";
   const config = METRIC_CONFIG[metric];
@@ -121,9 +157,11 @@ export async function getChartData(
   const highByKey: Record<string, number> = {};
   const lowByKey: Record<string, number> = {};
 
-  // Format the date key - always use full ISO string to preserve UTC context
+  // Format the date key - truncate to seconds for consistent matching across queries
+  // while preserving Z suffix for proper UTC parsing on the client
   const formatKey = (timeStr: string): string => {
-    return new Date(timeStr).toISOString();
+    const iso = new Date(timeStr).toISOString();
+    return iso.slice(0, 19) + "Z"; // "2025-12-28T14:00:00Z"
   };
 
   try {

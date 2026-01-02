@@ -1,5 +1,6 @@
 "use server";
 
+import { cacheLife } from "next/cache";
 import { queryApi } from "@/lib/influxdb";
 
 export interface HumidityDataPoint {
@@ -16,6 +17,9 @@ export interface HumidityStats {
 }
 
 export async function getHumidityData(): Promise<HumidityStats> {
+  "use cache";
+  cacheLife({ revalidate: 300 }); // 5 minutes
+
   const bucket = process.env.INFLUXDB_BUCKET || "weather";
   const station = process.env.INFLUXDB_STATION || "ST-00190461";
 

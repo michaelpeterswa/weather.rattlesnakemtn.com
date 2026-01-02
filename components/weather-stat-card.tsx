@@ -104,7 +104,7 @@ export function WeatherStatCard({
             <span className="font-normal text-muted-foreground">({unit})</span>
           </dt>
           <dd className="text-lg font-semibold" style={{ color }}>
-            {currentValue !== null ? `${currentValue}${unit}` : "--"}
+            {currentValue !== null ? `${currentValue} ${unit}` : "--"}
           </dd>
           {lastUpdated && (
             <dd className="text-xs text-muted-foreground">
@@ -156,13 +156,13 @@ export function WeatherStatCard({
         {(highValue !== undefined || lowValue !== undefined || description) && (
           <dd className="flex items-center justify-between text-xs mt-2">
             {highValue !== undefined && (
-              <span className="font-medium text-foreground">H: {highValue}{unit}</span>
+              <span className="font-medium text-foreground">H: {highValue} {unit}</span>
             )}
             {lowValue !== undefined && (
-              <span className="font-medium text-foreground">L: {lowValue}{unit}</span>
+              <span className="font-medium text-foreground">L: {lowValue} {unit}</span>
             )}
             {delta !== null && (
-              <span className="text-muted-foreground">Δ{delta}{unit}</span>
+              <span className="text-muted-foreground">Δ{delta} {unit}</span>
             )}
             {description && !highValue && !lowValue && (
               <span className="text-muted-foreground">{description}</span>

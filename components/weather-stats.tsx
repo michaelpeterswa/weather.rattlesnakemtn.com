@@ -17,6 +17,29 @@ import {
   getWindDirectionData,
   WindDirectionStats,
 } from "@/app/actions/wind-direction";
+import { getDewPointData, DewPointStats } from "@/app/actions/dew-point";
+import { getUVData, UVStats } from "@/app/actions/uv";
+import {
+  getPrecipitationData,
+  PrecipitationStats,
+} from "@/app/actions/precipitation";
+import { getLightningData, LightningStats } from "@/app/actions/lightning";
+import {
+  getSolarRadiationData,
+  SolarRadiationStats,
+} from "@/app/actions/solar-radiation";
+import {
+  getIlluminanceData,
+  IlluminanceStats,
+} from "@/app/actions/illuminance";
+
+// Format large lux values for display (e.g., 50000 -> "50k")
+function formatLux(lux: number): string {
+  if (lux >= 1000) {
+    return `${Math.round(lux / 100) / 10}k`;
+  }
+  return String(Math.round(lux));
+}
 
 interface WeatherState<T> {
   data: T | null;
@@ -46,6 +69,36 @@ export default function WeatherStats() {
     error: null,
   });
   const [windDirection, setWindDirection] = useState<WeatherState<WindDirectionStats>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [dewPoint, setDewPoint] = useState<WeatherState<DewPointStats>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [uv, setUV] = useState<WeatherState<UVStats>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [precipitation, setPrecipitation] = useState<WeatherState<PrecipitationStats>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [lightning, setLightning] = useState<WeatherState<LightningStats>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [solarRadiation, setSolarRadiation] = useState<WeatherState<SolarRadiationStats>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [illuminance, setIlluminance] = useState<WeatherState<IlluminanceStats>>({
     data: null,
     loading: true,
     error: null,
@@ -117,11 +170,95 @@ export default function WeatherStats() {
       }
     }
 
+    async function fetchDewPoint() {
+      try {
+        const data = await getDewPointData();
+        setDewPoint({ data, loading: false, error: null });
+      } catch (err) {
+        setDewPoint({
+          data: null,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to fetch data",
+        });
+      }
+    }
+
+    async function fetchUV() {
+      try {
+        const data = await getUVData();
+        setUV({ data, loading: false, error: null });
+      } catch (err) {
+        setUV({
+          data: null,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to fetch data",
+        });
+      }
+    }
+
+    async function fetchPrecipitation() {
+      try {
+        const data = await getPrecipitationData();
+        setPrecipitation({ data, loading: false, error: null });
+      } catch (err) {
+        setPrecipitation({
+          data: null,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to fetch data",
+        });
+      }
+    }
+
+    async function fetchLightning() {
+      try {
+        const data = await getLightningData();
+        setLightning({ data, loading: false, error: null });
+      } catch (err) {
+        setLightning({
+          data: null,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to fetch data",
+        });
+      }
+    }
+
+    async function fetchSolarRadiation() {
+      try {
+        const data = await getSolarRadiationData();
+        setSolarRadiation({ data, loading: false, error: null });
+      } catch (err) {
+        setSolarRadiation({
+          data: null,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to fetch data",
+        });
+      }
+    }
+
+    async function fetchIlluminance() {
+      try {
+        const data = await getIlluminanceData();
+        setIlluminance({ data, loading: false, error: null });
+      } catch (err) {
+        setIlluminance({
+          data: null,
+          loading: false,
+          error: err instanceof Error ? err.message : "Failed to fetch data",
+        });
+      }
+    }
+
     fetchTemperature();
     fetchHumidity();
     fetchPressure();
     fetchWind();
     fetchWindDirection();
+    fetchDewPoint();
+    fetchUV();
+    fetchPrecipitation();
+    fetchLightning();
+    fetchSolarRadiation();
+    fetchIlluminance();
   }, []);
 
   const temperatureData: WeatherDataPoint[] =
@@ -148,13 +285,49 @@ export default function WeatherStats() {
       value: d.speed,
     })) ?? [];
 
+  const dewPointData: WeatherDataPoint[] =
+    dewPoint.data?.data.map((d) => ({
+      time: d.time,
+      value: d.dewPoint,
+    })) ?? [];
+
+  const uvData: WeatherDataPoint[] =
+    uv.data?.data.map((d) => ({
+      time: d.time,
+      value: d.uv,
+    })) ?? [];
+
+  const precipitationData: WeatherDataPoint[] =
+    precipitation.data?.data.map((d) => ({
+      time: d.time,
+      value: d.precipitation,
+    })) ?? [];
+
+  const lightningData: WeatherDataPoint[] =
+    lightning.data?.data.map((d) => ({
+      time: d.time,
+      value: d.strikes,
+    })) ?? [];
+
+  const solarRadiationData: WeatherDataPoint[] =
+    solarRadiation.data?.data.map((d) => ({
+      time: d.time,
+      value: d.radiation,
+    })) ?? [];
+
+  const illuminanceData: WeatherDataPoint[] =
+    illuminance.data?.data.map((d) => ({
+      time: d.time,
+      value: d.illuminance,
+    })) ?? [];
+
   return (
     <div className="flex items-center justify-center px-4 lg:px-6 w-full">
       <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 w-full">
         <WeatherStatCard
           name="Temperature"
           unit="°F"
-          color="hsl(24 95% 53%)"
+          color="#FF3366"
           currentValue={temperature.data?.current ?? null}
           lastUpdated={temperature.data?.lastUpdated}
           highValue={temperature.data?.high}
@@ -167,7 +340,7 @@ export default function WeatherStats() {
         <WeatherStatCard
           name="Humidity"
           unit="%"
-          color="hsl(199 89% 48%)"
+          color="#00FFFF"
           currentValue={humidity.data?.current ?? null}
           lastUpdated={humidity.data?.lastUpdated}
           highValue={humidity.data?.high}
@@ -179,8 +352,8 @@ export default function WeatherStats() {
 
         <WeatherStatCard
           name="Pressure"
-          unit=" inHg"
-          color="hsl(142 76% 36%)"
+          unit="inHg"
+          color="#39FF14"
           currentValue={pressure.data?.current ?? null}
           lastUpdated={pressure.data?.lastUpdated}
           highValue={pressure.data?.high}
@@ -193,8 +366,8 @@ export default function WeatherStats() {
 
         <WeatherStatCard
           name="Wind"
-          unit=" mph"
-          color="hsl(262 83% 58%)"
+          unit="mph"
+          color="#FF6B00"
           currentValue={wind.data?.current ?? null}
           lastUpdated={wind.data?.lastUpdated}
           highValue={wind.data?.high}
@@ -230,7 +403,7 @@ export default function WeatherStats() {
               <>
                 <dd
                   className="text-6xl font-bold flex-1 flex items-center"
-                  style={{ color: "hsl(262 83% 58%)" }}
+                  style={{ color: "#FF6B00" }}
                 >
                   {windDirection.data?.cardinal ?? "--"}
                 </dd>
@@ -241,6 +414,110 @@ export default function WeatherStats() {
             )}
           </CardContent>
         </Card>
+
+        <WeatherStatCard
+          name="Dew Point"
+          unit="°F"
+          color="#BF00FF"
+          currentValue={dewPoint.data?.current ?? null}
+          lastUpdated={dewPoint.data?.lastUpdated}
+          highValue={dewPoint.data?.high}
+          lowValue={dewPoint.data?.low}
+          data={dewPointData}
+          loading={dewPoint.loading}
+          error={dewPoint.error}
+        />
+
+        <WeatherStatCard
+          name="UV Index"
+          unit="UVI"
+          color="#FFFF00"
+          currentValue={uv.data?.current ?? null}
+          lastUpdated={uv.data?.lastUpdated}
+          highValue={uv.data?.high}
+          lowValue={uv.data?.low}
+          data={uvData}
+          loading={uv.loading}
+          error={uv.error}
+        />
+
+        <WeatherStatCard
+          name="Precipitation"
+          unit="in"
+          color="#00BFFF"
+          currentValue={precipitation.data?.current ?? null}
+          lastUpdated={precipitation.data?.lastUpdated}
+          description={`24h Total: ${precipitation.data?.total ?? 0} in`}
+          data={precipitationData}
+          loading={precipitation.loading}
+          error={precipitation.error}
+        />
+
+        {/* Lightning */}
+        <Card className="p-0">
+          <CardContent className="p-4 h-full flex flex-col">
+            <dt className="text-sm font-medium text-foreground">
+              {lightning.loading ? (
+                <div className="h-5 bg-muted rounded w-28 animate-pulse"></div>
+              ) : (
+                "Lightning"
+              )}
+            </dt>
+            {lightning.loading ? (
+              <>
+                <div className="flex-1 flex items-center">
+                  <div className="h-9 bg-muted rounded w-20 animate-pulse"></div>
+                </div>
+                <div className="h-5 bg-muted rounded w-32 animate-pulse"></div>
+              </>
+            ) : lightning.error ? (
+              <dd className="text-sm text-destructive mt-2 flex-1 flex items-center">
+                {lightning.error}
+              </dd>
+            ) : (
+              <>
+                <dd
+                  className="text-4xl font-bold flex-1 flex items-center"
+                  style={{ color: "#FF00FF" }}
+                >
+                  {lightning.data?.totalStrikes ?? 0} strikes
+                </dd>
+                <dd className="text-sm text-muted-foreground">
+                  {lightning.data?.lastStrikeDistance
+                    ? `Last: ${lightning.data.lastStrikeDistance} mi away`
+                    : "No recent strikes"}
+                </dd>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <WeatherStatCard
+          name="Solar Radiation"
+          unit="W/m²"
+          color="#FF1493"
+          currentValue={solarRadiation.data?.current ?? null}
+          lastUpdated={solarRadiation.data?.lastUpdated}
+          highValue={solarRadiation.data?.high}
+          lowValue={solarRadiation.data?.low}
+          data={solarRadiationData}
+          loading={solarRadiation.loading}
+          error={solarRadiation.error}
+        />
+
+        <WeatherStatCard
+          name="Illuminance"
+          unit="lux"
+          color="#00FF7F"
+          currentValue={illuminance.data?.current ?? null}
+          lastUpdated={illuminance.data?.lastUpdated}
+          highValue={illuminance.data?.high}
+          lowValue={illuminance.data?.low}
+          description={illuminance.data?.current ? formatLux(illuminance.data.current) : undefined}
+          data={illuminanceData}
+          loading={illuminance.loading}
+          error={illuminance.error}
+        />
       </dl>
     </div>
   );

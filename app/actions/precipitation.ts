@@ -3,52 +3,53 @@
 import { cacheLife } from "next/cache";
 import { queryApi } from "@/lib/influxdb";
 
-export interface TemperatureDataPoint {
+export interface PrecipitationDataPoint {
   time: string;
-  temperature: number;
+  precipitation: number;
 }
 
-export interface TemperatureStats {
+export interface PrecipitationStats {
   current: number | null;
   lastUpdated: string | null;
-  high: number;
-  low: number;
-  data: TemperatureDataPoint[];
+  total: number;
+  data: PrecipitationDataPoint[];
 }
 
-export async function getTemperatureData(): Promise<TemperatureStats> {
+// Convert mm to inches
+function mmToInches(mm: number): number {
+  return Math.round((mm * 0.03937) * 100) / 100;
+}
+
+export async function getPrecipitationData(): Promise<PrecipitationStats> {
   "use cache";
   cacheLife({ revalidate: 300 }); // 5 minutes
 
   const bucket = process.env.INFLUXDB_BUCKET || "weather";
   const station = process.env.INFLUXDB_STATION || "ST-00190461";
 
-  // Query for today's temperature data (hourly aggregates)
+  // Get hourly precipitation totals
   const fluxQuery = `
     from(bucket: "${bucket}")
       |> range(start: -24h)
       |> filter(fn: (r) => r["_measurement"] == "weather")
       |> filter(fn: (r) => r["station"] == "${station}")
-      |> filter(fn: (r) => r["_field"] == "temp")
-      |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
-      |> map(fn: (r) => ({ r with _value: r._value * 9.0 / 5.0 + 32.0 }))
-      |> yield(name: "mean")
+      |> filter(fn: (r) => r["_field"] == "precipitation")
+      |> aggregateWindow(every: 1h, fn: sum, createEmpty: false)
+      |> yield(name: "sum")
   `;
 
-  // Query for the most recent temperature reading
   const lastQuery = `
     from(bucket: "${bucket}")
       |> range(start: -1h)
       |> filter(fn: (r) => r["_measurement"] == "weather")
       |> filter(fn: (r) => r["station"] == "${station}")
-      |> filter(fn: (r) => r["_field"] == "temp")
+      |> filter(fn: (r) => r["_field"] == "precipitation")
       |> last()
-      |> map(fn: (r) => ({ r with _value: r._value * 9.0 / 5.0 + 32.0 }))
       |> yield(name: "last")
   `;
 
-  const data: TemperatureDataPoint[] = [];
-  let currentTemp: number | null = null;
+  const data: PrecipitationDataPoint[] = [];
+  let currentPrecip: number | null = null;
   let lastUpdated: string | null = null;
 
   try {
@@ -63,41 +64,29 @@ export async function getTemperatureData(): Promise<TemperatureStats> {
 
       data.push({
         time: `${displayHours}:00 ${ampm}`,
-        temperature: Math.round((row._value as number) * 10) / 10,
+        precipitation: mmToInches(row._value as number),
       });
     }
 
-    // Get the most recent reading
     const lastRows = queryApi.iterateRows(lastQuery);
     for await (const { values, tableMeta } of lastRows) {
       const row = tableMeta.toObject(values);
-      currentTemp = Math.round((row._value as number) * 10) / 10;
+      currentPrecip = mmToInches(row._value as number);
       lastUpdated = row._time as string;
     }
   } catch (error) {
     console.error("Error querying InfluxDB:", error);
-    throw new Error("Failed to fetch temperature data");
+    throw new Error("Failed to fetch precipitation data");
   }
 
-  if (data.length === 0) {
-    return {
-      current: null,
-      lastUpdated: null,
-      high: 0,
-      low: 0,
-      data: [],
-    };
-  }
-
-  const temperatures = data.map((d) => d.temperature);
-  const high = Math.max(...temperatures);
-  const low = Math.min(...temperatures);
+  // Calculate 24h total
+  const total = data.reduce((sum, d) => sum + d.precipitation, 0);
+  const roundedTotal = Math.round(total * 100) / 100;
 
   return {
-    current: currentTemp,
+    current: currentPrecip,
     lastUpdated,
-    high,
-    low,
+    total: roundedTotal,
     data,
   };
 }
