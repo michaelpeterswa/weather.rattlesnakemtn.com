@@ -4,18 +4,29 @@ A real-time weather dashboard for Rattlesnake Mountain, featuring interactive ch
 
 ## Features
 
-- **Current Conditions** - Temperature, humidity, pressure, wind speed, and wind direction with sparkline visualizations
-- **Interactive Charts** - Historical weather data across configurable time ranges (24h, 7d, 30d, 90d)
+- **Current Conditions** - Real-time weather metrics with sparkline visualizations:
+  - Temperature, Humidity, Pressure
+  - Wind Speed and Direction
+  - Dew Point, UV Index
+  - Precipitation, Lightning Detection
+  - Solar Radiation, Illuminance
+- **Interactive Charts** - Historical weather data across configurable time ranges (24h, 7d, 30d, 90d) with vibrant neon color coding
 - **7-Day Forecast** - NWS forecast with temperature, wind, and precipitation data
 - **SNOTEL Snow Depth** - Real-time snow depth data from nearby SNOTEL stations
-- **Dark/Light Mode** - Theme toggle with system preference support
+- **Dark/Light Mode** - Theme toggle with system preference support and glow effects on charts
 - **Responsive Design** - Optimized for desktop and mobile devices
 
 ## Data Sources
 
 ### Weather Station
 
-Current conditions are collected from a [WeatherFlow Tempest](https://tempest.earth/) station located on Rattlesnake Mountain. The station reports temperature, humidity, pressure, wind speed, and wind direction to InfluxDB.
+Current conditions are collected from a [WeatherFlow Tempest](https://tempest.earth/) station located on Rattlesnake Mountain. The station reports the following metrics to InfluxDB:
+
+- Temperature, Humidity, Pressure
+- Wind Speed and Direction
+- Dew Point, UV Index
+- Precipitation and Lightning Detection
+- Solar Radiation and Illuminance
 
 ### NWS Forecast
 
@@ -75,12 +86,21 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 ```
 ├── app/
 │   ├── actions/          # Server actions for data fetching
+│   │   ├── temperature.ts, humidity.ts, pressure.ts
+│   │   ├── wind.ts, wind-direction.ts
+│   │   ├── dew-point.ts, uv.ts
+│   │   ├── precipitation.ts, lightning.ts
+│   │   ├── solar-radiation.ts, illuminance.ts
+│   │   ├── chart-data.ts # Combined chart data fetching
+│   │   └── snotel.ts     # SNOTEL API integration
 │   ├── layout.tsx        # Root layout with theme provider
 │   └── page.tsx          # Dashboard home page
 ├── components/
 │   ├── ui/               # shadcn/ui components
-│   ├── weather-stats.tsx # Weather stats cards
-│   ├── chart-area-interactive.tsx
+│   ├── weather-stats.tsx # Weather stats cards with sparklines
+│   ├── weather-stat-card.tsx # Individual stat card component
+│   ├── chart-area-interactive.tsx # Main interactive chart
+│   ├── snotel-snow-depth.tsx # SNOTEL snow depth chart
 │   └── nws-forecast.tsx  # NWS forecast display
 ├── lib/
 │   └── influxdb.ts       # InfluxDB client configuration

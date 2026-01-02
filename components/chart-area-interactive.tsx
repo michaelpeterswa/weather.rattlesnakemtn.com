@@ -34,10 +34,14 @@ import {
 } from "@/app/actions/chart-data";
 
 const METRIC_OPTIONS: { value: MetricType; label: string; color: string }[] = [
-  { value: "temperature", label: "Temperature", color: "hsl(24 95% 53%)" },
-  { value: "humidity", label: "Humidity", color: "hsl(199 89% 48%)" },
-  { value: "pressure", label: "Pressure", color: "hsl(142 76% 36%)" },
-  { value: "wind", label: "Wind", color: "hsl(262 83% 58%)" },
+  { value: "temperature", label: "Temperature", color: "#FF3366" },
+  { value: "humidity", label: "Humidity", color: "#00FFFF" },
+  { value: "pressure", label: "Pressure", color: "#39FF14" },
+  { value: "wind", label: "Wind", color: "#FF6B00" },
+  { value: "dewPoint", label: "Dew Point", color: "#BF00FF" },
+  { value: "uv", label: "UV Index", color: "#FFFF00" },
+  { value: "solarRadiation", label: "Solar Radiation", color: "#FF1493" },
+  { value: "illuminance", label: "Illuminance", color: "#00FF7F" },
 ];
 
 const TIME_RANGE_DAYS: Record<string, number> = {
@@ -49,7 +53,7 @@ const TIME_RANGE_DAYS: Record<string, number> = {
 
 function getChartConfig(metric: MetricType): ChartConfig {
   const option = METRIC_OPTIONS.find((o) => o.value === metric);
-  const color = option?.color ?? "hsl(24 95% 53%)";
+  const color = option?.color ?? "#FF3366";
 
   return {
     value: {
@@ -61,7 +65,7 @@ function getChartConfig(metric: MetricType): ChartConfig {
     },
     low: {
       label: "Low",
-      color: `${color.replace(")", " / 0.6)")}`,
+      color: `${color}99`, // Add 60% opacity via hex alpha
     },
   };
 }
@@ -104,7 +108,7 @@ export function ChartAreaInteractive() {
 
   const chartConfig = getChartConfig(metric);
   const metricOption = METRIC_OPTIONS.find((o) => o.value === metric);
-  const metricColor = metricOption?.color ?? "hsl(24 95% 53%)";
+  const metricColor = metricOption?.color ?? "#FF3366";
 
   return (
     <Card className="@container/card">
@@ -238,10 +242,14 @@ export function ChartAreaInteractive() {
                 tickMargin={8}
                 width={75}
                 tickFormatter={(value) => {
-                  const rounded = Number(value).toFixed(2);
+                  const num = Number(value);
+                  // Remove trailing zeros: 29.00 -> 29, 29.50 -> 29.5, 29.53 -> 29.53
+                  const formatted = num % 1 === 0
+                    ? num.toString()
+                    : parseFloat(num.toFixed(2)).toString();
                   const unit = chartStats?.unit ?? "";
                   const space = unit === "inHg" ? " " : "";
-                  return `${rounded}${space}${unit}`;
+                  return `${formatted}${space}${unit}`;
                 }}
               />
               <XAxis
@@ -252,18 +260,31 @@ export function ChartAreaInteractive() {
                 minTickGap={32}
                 tickFormatter={(value) => {
                   const date = new Date(value);
-                  // For sub-daily data, show date + time; for daily show just date
                   if (timeRange === "24h") {
                     return date.toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                      timeZone: "America/Los_Angeles",
+                    });
+                  }
+                  if (timeRange === "7d") {
+                    // Include time for 7d view since multiple points per day
+                    return date.toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
                       hour: "numeric",
                       hour12: true,
                       timeZone: "America/Los_Angeles",
                     });
                   }
-                  if (timeRange === "7d" || timeRange === "30d") {
-                    return date.toLocaleDateString("en-US", {
+                  if (timeRange === "30d") {
+                    // Include time for 30d view since multiple points per day
+                    return date.toLocaleString("en-US", {
                       month: "short",
                       day: "numeric",
+                      hour: "numeric",
+                      hour12: true,
                       timeZone: "America/Los_Angeles",
                     });
                   }

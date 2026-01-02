@@ -24,9 +24,9 @@ import { useTheme } from "next-themes";
 
 // Colors for each station
 const STATION_COLORS = [
-  "hsl(199 89% 48%)", // Blue
-  "hsl(142 76% 36%)", // Green
-  "hsl(262 83% 58%)", // Purple
+  "#00FFFF", // Neon Cyan
+  "#39FF14", // Neon Green
+  "#FF00FF", // Neon Magenta
 ];
 
 interface ChartDataPoint {

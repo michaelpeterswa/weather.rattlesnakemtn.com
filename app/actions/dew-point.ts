@@ -3,74 +3,59 @@
 import { cacheLife } from "next/cache";
 import { queryApi } from "@/lib/influxdb";
 
-export interface WindDataPoint {
+export interface DewPointDataPoint {
   time: string;
-  speed: number;
+  dewPoint: number;
 }
 
-export interface WindStats {
+export interface DewPointStats {
   current: number | null;
   lastUpdated: string | null;
   high: number;
   low: number;
-  gust: number;
-  data: WindDataPoint[];
+  data: DewPointDataPoint[];
 }
 
-// Convert m/s to mph
-function msToMph(ms: number): number {
-  return Math.round((ms * 2.237) * 10) / 10;
+// Convert Celsius to Fahrenheit
+function celsiusToFahrenheit(c: number): number {
+  return Math.round((c * 9 / 5 + 32) * 10) / 10;
 }
 
-export async function getWindData(): Promise<WindStats> {
+export async function getDewPointData(): Promise<DewPointStats> {
   "use cache";
   cacheLife({ revalidate: 300 }); // 5 minutes
 
   const bucket = process.env.INFLUXDB_BUCKET || "weather";
   const station = process.env.INFLUXDB_STATION || "ST-00190461";
 
-  // Query for average wind speed
-  const avgQuery = `
+  const fluxQuery = `
     from(bucket: "${bucket}")
       |> range(start: -24h)
       |> filter(fn: (r) => r["_measurement"] == "weather")
       |> filter(fn: (r) => r["station"] == "${station}")
-      |> filter(fn: (r) => r["_field"] == "wind_avg")
+      |> filter(fn: (r) => r["_field"] == "dew_point")
       |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
       |> yield(name: "mean")
   `;
 
-  // Query for the most recent wind reading (within 1 hour)
   const lastQuery = `
     from(bucket: "${bucket}")
       |> range(start: -1h)
       |> filter(fn: (r) => r["_measurement"] == "weather")
       |> filter(fn: (r) => r["station"] == "${station}")
-      |> filter(fn: (r) => r["_field"] == "wind_avg")
+      |> filter(fn: (r) => r["_field"] == "dew_point")
       |> last()
       |> yield(name: "last")
   `;
 
-  // Query for max gust in the period
-  const gustQuery = `
-    from(bucket: "${bucket}")
-      |> range(start: -24h)
-      |> filter(fn: (r) => r["_measurement"] == "weather")
-      |> filter(fn: (r) => r["station"] == "${station}")
-      |> filter(fn: (r) => r["_field"] == "wind_gust")
-      |> max()
-      |> yield(name: "max")
-  `;
-
-  const data: WindDataPoint[] = [];
-  let maxGust = 0;
-  let currentWind: number | null = null;
+  const data: DewPointDataPoint[] = [];
+  let currentDewPoint: number | null = null;
   let lastUpdated: string | null = null;
 
   try {
-    // Get average wind data
-    const avgRows = queryApi.iterateRows(avgQuery);
-    for await (const { values, tableMeta } of avgRows) {
+    const rows = queryApi.iterateRows(fluxQuery);
+
+    for await (const { values, tableMeta } of rows) {
       const row = tableMeta.toObject(values);
       const date = new Date(row._time as string);
       const hours = date.getHours();
@@ -79,27 +64,19 @@ export async function getWindData(): Promise<WindStats> {
 
       data.push({
         time: `${displayHours}:00 ${ampm}`,
-        speed: msToMph(row._value as number),
+        dewPoint: celsiusToFahrenheit(row._value as number),
       });
     }
 
-    // Get the most recent reading
     const lastRows = queryApi.iterateRows(lastQuery);
     for await (const { values, tableMeta } of lastRows) {
       const row = tableMeta.toObject(values);
-      currentWind = msToMph(row._value as number);
+      currentDewPoint = celsiusToFahrenheit(row._value as number);
       lastUpdated = row._time as string;
-    }
-
-    // Get max gust
-    const gustRows = queryApi.iterateRows(gustQuery);
-    for await (const { values, tableMeta } of gustRows) {
-      const row = tableMeta.toObject(values);
-      maxGust = msToMph(row._value as number);
     }
   } catch (error) {
     console.error("Error querying InfluxDB:", error);
-    throw new Error("Failed to fetch wind data");
+    throw new Error("Failed to fetch dew point data");
   }
 
   if (data.length === 0) {
@@ -108,21 +85,19 @@ export async function getWindData(): Promise<WindStats> {
       lastUpdated: null,
       high: 0,
       low: 0,
-      gust: 0,
       data: [],
     };
   }
 
-  const speeds = data.map((d) => d.speed);
-  const high = Math.max(...speeds);
-  const low = Math.min(...speeds);
+  const dewPoints = data.map((d) => d.dewPoint);
+  const high = Math.max(...dewPoints);
+  const low = Math.min(...dewPoints);
 
   return {
-    current: currentWind,
+    current: currentDewPoint,
     lastUpdated,
     high,
     low,
-    gust: maxGust,
     data,
   };
 }

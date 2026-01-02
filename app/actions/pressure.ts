@@ -1,5 +1,6 @@
 "use server";
 
+import { cacheLife } from "next/cache";
 import { queryApi } from "@/lib/influxdb";
 
 export interface PressureDataPoint {
@@ -22,6 +23,9 @@ function hPaToInHg(hPa: number): number {
 }
 
 export async function getPressureData(): Promise<PressureStats> {
+  "use cache";
+  cacheLife({ revalidate: 300 }); // 5 minutes
+
   const bucket = process.env.INFLUXDB_BUCKET || "weather";
   const station = process.env.INFLUXDB_STATION || "ST-00190461";
 
