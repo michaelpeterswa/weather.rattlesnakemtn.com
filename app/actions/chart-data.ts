@@ -76,20 +76,15 @@ export async function getChartData(
   // 30d -> 6 hours (120 points)
   // 90d -> 1 day (90 points)
   let aggregateWindow: string;
-  let includeTime = false;
 
   if (days === 1) {
     aggregateWindow = "15m";
-    includeTime = true;
   } else if (days <= 7) {
     aggregateWindow = "2h";
-    includeTime = true;
   } else if (days <= 30) {
     aggregateWindow = "6h";
-    includeTime = true;
   } else {
     aggregateWindow = "1d";
-    includeTime = false;
   }
 
   const fluxQuery = `
@@ -126,14 +121,9 @@ export async function getChartData(
   const highByKey: Record<string, number> = {};
   const lowByKey: Record<string, number> = {};
 
-  // Format the date key based on aggregation type
+  // Format the date key - always use full ISO string to preserve UTC context
   const formatKey = (timeStr: string): string => {
-    const date = new Date(timeStr);
-    if (includeTime) {
-      // For sub-daily data, include the time
-      return date.toISOString().slice(0, 16); // "2025-12-28T14:00"
-    }
-    return date.toISOString().split("T")[0]; // "2025-12-28"
+    return new Date(timeStr).toISOString();
   };
 
   try {
